@@ -2,7 +2,7 @@
 CloneTrack is an application that plans and tracks experiments for the traditional molecular cloning workflow.
 
 ## Molecular cloning
-Molecular cloning is a very common set of experimental methods in molecular biology that are used to assemble and replicate recombinant DNA molecules. The workflow is generally as follows:
+Molecular cloning is a very common set of experimental methods in molecular biology that is used to assemble and replicate recombinant DNA molecules. The workflow is generally as follows:
 
 1. Start by purchasing DNA oligos and primers from a vendor.
 2. PCR to amplify DNA oligos.
