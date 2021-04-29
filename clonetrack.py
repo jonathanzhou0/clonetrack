@@ -10,26 +10,26 @@ def initialize_tables():
 	cur = con.cursor()
 	cur.execute("""
 		CREATE TABLE IF NOT EXISTS oligos
-		(name, sequence, orientation)
+		(index_num, sequence, orientation)
 	""")
 	cur.execute("""
 		CREATE TABLE IF NOT EXISTS pcrs
-		(name, date_planned, f_primer, r_primer, template, \
+		(index_num, date_planned, f_primer, r_primer, template, \
 		date_completed, notes, polymerase)
 	""")
 	cur.execute("""
 		CREATE TABLE IF NOT EXISTS ligations
-		(name, date_planned, pcr_insert, backbone, \
+		(index_num, date_planned, pcr_insert, backbone, \
 		date_completed, notes)
 	""")
 	cur.execute("""
 		CREATE TABLE IF NOT EXISTS transformations
-		(name, date_planned, host_strain, plasmid, \
+		(index_num, date_planned, host_strain, plasmid, \
 		date_completed, notes)
 	""")
 	cur.execute("""
 		CREATE TABLE IF NOT EXISTS minipreps
-		(name, date_planned, prepped_transformation, \
+		(index_num, date_planned, prepped_transformation, \
 		date_completed, notes, concentration)
 	""")
 	con.commit()
@@ -39,20 +39,37 @@ def initialize_tables():
 initialize_tables()
 
 
+def get_next_sql_index(table_name):
+	"""Get the next index for a given SQL table."""
+
+	con = sqlite3.connect('clonetrack.db')
+	cur = con.cursor()
+	cmd = f"""
+	SELECT MAX(index_num) FROM {table_name}
+	"""
+	cur.execute(cmd)
+	ind = cur.fetchone()[0]
+	con.close()
+	if ind:
+		return ind + 1
+	else:
+		return 1
+
+
 class Oligo:
 	"""Oligo."""
 
-	def __init__(self, name, sequence, orientation):
+	def __init__(self, sequence, orientation):
 		"""Initialize."""
 
-		self.name = name
 		self.sequence = sequence
 		self.orientation = orientation
+		self.ind = get_next_sql_index('oligos')
 
 		con = sqlite3.connect('clonetrack.db')
 		cur = con.cursor()
 		cmd = "INSERT INTO oligos VALUES (?,?,?)"
-		cur.execute(cmd, (self.name, self.sequence, self.orientation))
+		cur.execute(cmd, (self.ind, self.sequence, self.orientation))
 		con.commit()
 		con.close()
 
@@ -60,10 +77,9 @@ class Oligo:
 class Experiment:
 	"""Parent class for all experiment types."""
 
-	def __init__(self, name, date_planned, date_completed='', notes=''):
+	def __init__(self, date_planned, date_completed='', notes=''):
 		"""Initialize."""
 
-		self.name = name
 		self.date_planned = date_planned
 		self.date_completed = date_completed
 		self.notes = notes
@@ -72,22 +88,23 @@ class Experiment:
 class PCR(Experiment):
 	"""PCR."""
 
-	def __init__(self, name, date_planned,
+	def __init__(self, date_planned,
 				 f_primer, r_primer, template,
 				 date_completed='', notes='',
 				 polymerase='taq'):
 		"""Initialize."""
 
-		super().__init__(name, date_planned, date_completed, notes)
+		super().__init__(date_planned, date_completed, notes)
 		self.f_primer = f_primer
 		self.r_primer = r_primer
 		self.template = template
 		self.polymerase = polymerase
+		self.ind = get_next_sql_index('pcrs')
 
 		con = sqlite3.connect('clonetrack.db')
 		cur = con.cursor()
 		cmd = "INSERT INTO pcrs VALUES (?,?,?,?,?,?,?,?)"
-		cur.execute(cmd, (self.name, self.date_planned, self.date_completed,
+		cur.execute(cmd, (self.ind, self.date_planned, self.date_completed,
 						  self.f_primer, self.r_primer, self.template,
 						  self.notes, self.polymerase))
 		con.commit()
@@ -97,19 +114,20 @@ class PCR(Experiment):
 class Ligation(Experiment):
 	"""Ligation."""
 
-	def __init__(self, name, date_planned,
+	def __init__(self, date_planned,
 				 pcr_insert, backbone,
 				 date_completed='', notes=''):
 		"""Initialize."""
 
-		super().__init__(name, date_planned, date_completed, notes)
+		super().__init__(date_planned, date_completed, notes)
 		self.pcr_insert = pcr_insert
 		self.backbone = backbone
+		self.ind = get_next_sql_index('ligations')
 
 		con = sqlite3.connect('clonetrack.db')
 		cur = con.cursor()
 		cmd = "INSERT INTO ligations VALUES (?,?,?,?,?,?)"
-		cur.execute(cmd, (self.name, self.date_planned, self.date_completed,
+		cur.execute(cmd, (self.ind, self.date_planned, self.date_completed,
 						  self.pcr_insert, self.backbone, self.notes))
 		con.commit()
 		con.close()
@@ -118,19 +136,20 @@ class Ligation(Experiment):
 class Transformation(Experiment):
 	"""Transformation."""
 
-	def __init__(self, name, date_planned,
+	def __init__(self, date_planned,
 				 host_strain, plasmid,
 				 date_completed='', notes=''):
 		"""Initialize."""
 
-		super().__init__(name, date_planned, date_completed, notes)
+		super().__init__(date_planned, date_completed, notes)
 		self.host_strain = host_strain
 		self.plasmid = plasmid
+		self.ind = get_next_sql_index('transformations')
 
 		con = sqlite3.connect('clonetrack.db')
 		cur = con.cursor()
 		cmd = "INSERT INTO transformations VALUES (?,?,?,?,?,?)"
-		cur.execute(cmd, (self.name, self.date_planned, self.date_completed,
+		cur.execute(cmd, (self.ind, self.date_planned, self.date_completed,
 						  self.host_strain, self.plasmid, self.notes))
 		con.commit()
 		con.close()
@@ -138,22 +157,59 @@ class Transformation(Experiment):
 class Miniprep(Experiment):
 	"""Miniprepped plasmid."""
 
-	def __init__(self, name, date_planned,
+	def __init__(self, date_planned,
 				 prepped_transformation,
 				 date_completed='', notes='',
 				 concentration=None):
 		"""Initialize."""
 
-		super().__init__(name, date_planned, date_completed, notes)
+		super().__init__(date_planned, date_completed, notes)
 		self.prepped_transformation = prepped_transformation
 		self.concentration = concentration
+		self.ind = get_next_sql_index('minipreps')
 
 		con = sqlite3.connect('clonetrack.db')
 		cur = con.cursor()
 		cmd = "INSERT INTO minipreps VALUES (?,?,?,?,?,?)"
-		cur.execute(cmd, (self.name, self.date_planned, self.date_completed,
+		cur.execute(cmd, (self.ind, self.date_planned, self.date_completed,
 						  self.prepped_transformation, self.concentration,
 						  self.notes))
 		con.commit()
 		con.close()
 
+
+def manually_add(experiment_type, values_tuple):
+	"""Manually add an experiment to the SQL table."""
+
+	types_list = ['oligo', 'pcr', 'ligation', 'transformation', 'miniprep']
+	if experiment_type not in types_list:
+		raise ValueError("""
+		Invalid experiment type! Must be an oligo, pcr, ligation,
+		transformation, or miniprep.
+		""")
+	elif experiment_type == 'oligo':
+		try:
+			Oligo(*values_tuple)
+		except:
+			return "ValueError: Something is wrong with your parameters!"
+	elif experiment_type == 'pcr':
+		try:
+			PCR(*values_tuple)
+		except:
+			return "ValueError: Something is wrong with your parameters!"
+	elif experiment_type == 'ligation':
+		try:
+			Ligation(*values_tuple)
+		except:
+			return "ValueError: Something is wrong with your parameters!"
+	elif experiment_type == 'transformation':
+		try:
+			Transformation(*values_tuple)
+		except:
+			return "ValueError: Something is wrong with your parameters!"
+	elif experiment_type == 'miniprep':
+		try:
+			Miniprep(*values_tuple)
+		except:
+			return "ValueError: Something is wrong with your parameters!"
+	
