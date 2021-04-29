@@ -35,3 +35,18 @@ def test_manually_add():
     assert minipreps == [(1, '05-01-2021', '', 'Transformation1', None, '')]
     con.commit()
     con.close()
+
+
+def test_edit():
+    """Test edit()."""
+
+    ct.edit('PCR1', 'date_completed', '05-05-2021')
+    con = sqlite3.connect('clonetrack.db')
+    cur = con.cursor()
+    cur.execute("""
+    SELECT date_completed FROM pcrs
+    WHERE index_num == 1
+    """)
+    assert cur.fetchone()[0] == '05-05-2021'
+    con.commit()
+    con.close()

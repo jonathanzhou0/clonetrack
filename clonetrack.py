@@ -251,5 +251,23 @@ def view(experiment_name):
 	header_list = headers[experiment_type.lower() + 's']
 	print(*header_list, sep='\t')
 	print(*experiment_info, sep='\t')
+	con.close()
+
+
+def edit(experiment_name, col_name, new_entry):
+	"""Edit information about an experiment."""
+
+	(experiment_type, index) = parse_exp_name(experiment_name)
+	con = sqlite3.connect('clonetrack.db')
+	cur = con.cursor()
+	cur.execute(f"""
+	UPDATE {experiment_type.lower() + 's'}
+	SET {col_name} = ?
+	WHERE index_num == {str(index)}
+	""", (new_entry,))
+	con.commit()
+	con.close()
+	return "Updated experiment!"
+
 
 
