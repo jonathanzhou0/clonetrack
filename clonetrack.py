@@ -183,6 +183,7 @@ class Miniprep(Experiment):
 def manually_add(experiment_type, values_tuple):
 	"""Manually add an experiment to the SQL table."""
 
+	experiment_type = experiment_type.lower()
 	types_list = ['oligo', 'pcr', 'ligation', 'transformation', 'miniprep']
 	if experiment_type not in types_list:
 		raise ValueError("""
@@ -191,29 +192,30 @@ def manually_add(experiment_type, values_tuple):
 		""")
 	elif experiment_type == 'oligo':
 		try:
-			Oligo(*values_tuple)
+			added = Oligo(*values_tuple)
 		except:
 			return "ValueError: Something is wrong with your parameters!"
 	elif experiment_type == 'pcr':
 		try:
-			PCR(*values_tuple)
+			added = PCR(*values_tuple)
 		except:
 			return "ValueError: Something is wrong with your parameters!"
 	elif experiment_type == 'ligation':
 		try:
-			Ligation(*values_tuple)
+			added = Ligation(*values_tuple)
 		except:
 			return "ValueError: Something is wrong with your parameters!"
 	elif experiment_type == 'transformation':
 		try:
-			Transformation(*values_tuple)
+			added = Transformation(*values_tuple)
 		except:
 			return "ValueError: Something is wrong with your parameters!"
 	elif experiment_type == 'miniprep':
 		try:
-			Miniprep(*values_tuple)
+			added = Miniprep(*values_tuple)
 		except:
 			return "ValueError: Something is wrong with your parameters!"
+	return 'Added ' + experiment_type + str(added.ind)
 
 
 def parse_exp_name(experiment_name):
