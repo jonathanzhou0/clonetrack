@@ -3,6 +3,7 @@
 import sqlite3
 import re
 import datetime
+import csv
 
 
 def initialize_tables():
@@ -366,9 +367,65 @@ def plan(templates_filename, f_primers_filename, r_primers_filename,
 		print("Miniprep" + str(miniprep.ind))
 
 
+def export_csv():
+	"""Export SQL tables to csv file."""
 
+	headers = {
+		"oligos": ["Index", "Name", "Sequence", "Orientation"],
+		"pcrs": ["Index", "Date Planned", "Date Completed",
+				 "Forward Primer", "Reverse Primer", "Template", "Notes",
+				 "Polymerase"],
+		"ligations": ["Index", "Date Planned", "Date Completed", 
+					  "PCR Insert", "Backbone", "Notes"],
+		"transformations": ["Index", "Date Planned", "Date Completed",
+							"Host Strain", "Plasmid", "Notes"],
+		"minipreps": ["Index", "Date Planned", "Date Completed",
+					  "Transformation", "Concentration", "Notes"]
+	}
+	con = sqlite3.connect('clonetrack.db')
+	cur = con.cursor()
+	cur.execute('SELECT * FROM oligos')
+	oligos = cur.fetchall()
+	cur.execute('SELECT * FROM pcrs')
+	pcrs = cur.fetchall()
+	cur.execute('SELECT * FROM ligations')
+	ligations = cur.fetchall()
+	cur.execute('SELECT * FROM transformations')
+	transformations = cur.fetchall()
+	cur.execute('SELECT * FROM minipreps')
+	minipreps = cur.fetchall()
+	con.close()
+	with open('oligos.csv', 'w', newline='') as csvfile:
+		datawriter = csv.writer(csvfile, delimiter='\t', quotechar='|',
+								quoting=csv.QUOTE_MINIMAL)
+		datawriter.writerow(headers['oligos'])
+		for oligo in oligos:
+			datawriter.writerow(oligo)
+	with open('pcrs.csv', 'w', newline='') as csvfile:
+		datawriter = csv.writer(csvfile, delimiter='\t', quotechar='|',
+								quoting=csv.QUOTE_MINIMAL)
+		datawriter.writerow(headers['pcrs'])
+		for pcr in pcrs:
+			datawriter.writerow(pcr)
+	with open('ligations.csv', 'w', newline='') as csvfile:
+		datawriter = csv.writer(csvfile, delimiter='\t', quotechar='|',
+								quoting=csv.QUOTE_MINIMAL)
+		datawriter.writerow(headers['ligations'])
+		for ligation in ligations:
+			datawriter.writerow(ligation)
+	with open('transformations.csv', 'w', newline='') as csvfile:
+		datawriter = csv.writer(csvfile, delimiter='\t', quotechar='|',
+								quoting=csv.QUOTE_MINIMAL)
+		datawriter.writerow(headers['transformations'])
+		for transformation in transformations:
+			datawriter.writerow(transformation)
+	with open('minipreps.csv', 'w', newline='') as csvfile:
+		datawriter = csv.writer(csvfile, delimiter='\t', quotechar='|',
+								quoting=csv.QUOTE_MINIMAL)
+		datawriter.writerow(headers['minipreps'])
+		for miniprep in minipreps:
+			datawriter.writerow(miniprep)
+	return 'Wrote to .csv files!'
+	
 
-
-
-
-
+	

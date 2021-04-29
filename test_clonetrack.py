@@ -4,6 +4,7 @@ import sqlite3
 import clonetrack as ct
 import re
 import datetime
+import csv
 
 
 def test_manually_add():
@@ -113,5 +114,52 @@ def test_plan():
     assert num_transformations == 6
     assert num_minipreps == 6
     assert miniprep2_trans == 'Transformation2'
+
+
+def test_export_csv():
+    """Test export_csv()."""
+
+    ct.export_csv()
+    idx = -1
+    with open('oligos.csv', newline='') as csvfile:
+        datareader = csv.reader(csvfile, delimiter='\t', quotechar='|')
+        for row in datareader:
+            idx += 1
+            if idx == 0:
+                continue
+            assert int(row[0]) == idx
+    idx = -1
+    with open('pcrs.csv', newline='') as csvfile:
+        datareader = csv.reader(csvfile, delimiter='\t', quotechar='|')
+        for row in datareader:
+            idx += 1
+            if idx == 0:
+                continue
+            assert int(row[0]) == idx
+    idx = -1
+    with open('ligations.csv', newline='') as csvfile:
+        datareader = csv.reader(csvfile, delimiter='\t', quotechar='|')
+        for row in datareader:
+            idx += 1
+            if idx == 0:
+                continue
+            assert int(row[0]) == idx
+    idx = -1
+    with open('transformations.csv', newline='') as csvfile:
+        datareader = csv.reader(csvfile, delimiter='\t', quotechar='|')
+        for row in datareader:
+            idx += 1
+            if idx == 0:
+                continue
+            assert int(row[0]) == idx
+    idx = -1
+    with open('minipreps.csv', newline='') as csvfile:
+        datareader = csv.reader(csvfile, delimiter='\t', quotechar='|')
+        for row in datareader:
+            idx += 1
+            if idx == 0:
+                continue
+            assert int(row[0]) == idx
+    
 
 

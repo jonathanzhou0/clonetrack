@@ -81,3 +81,13 @@ clonetrack.plan('templates.txt', 'f_primers.txt', 'r_primers.txt', backbones_lis
 The first three arguments are filenames for the FASTA .txt files. The fourth argument is a list of strings where each string is the name of a plasmid backbone. The fifth argument is the desired start date for the experiment - the function will automatically assign experiments to be done on successive days from each other. The sixth argument is optional and defaults to "E. coli", the most popular host strain for transformations in molecular biology.
 
 The function requires that each FASTA .txt file has the same number of sequences, and PCRS are planned such that the first sequence in the template file is PCR'd with the first sequence in the primer files, and so on with the second, third, and so forth. For ligations, the function assumes that each PCR product will be ligated with ALL backbones included in the backbone list.
+
+### export_csv
+
+This function exports the five databases as five .csv files. The syntax is as follows:
+
+```python
+clonetrack.export_csv()
+```
+
+No arguments are needed.
