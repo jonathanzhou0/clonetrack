@@ -2,6 +2,7 @@
 
 import sqlite3
 import clonetrack as ct
+import re
 
 
 def test_manually_add():
@@ -32,3 +33,5 @@ def test_manually_add():
     assert transformations == [(1, '05-01-2021', '', 'Ecoli', 'Ligation1',
                                '')]
     assert minipreps == [(1, '05-01-2021', '', 'Transformation1', None, '')]
+    con.commit()
+    con.close()

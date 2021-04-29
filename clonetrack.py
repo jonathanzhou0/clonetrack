@@ -1,6 +1,7 @@
 """Plan and track molecular cloning experiments."""
 
 import sqlite3
+import re
 
 
 def initialize_tables():
@@ -14,23 +15,23 @@ def initialize_tables():
 	""")
 	cur.execute("""
 		CREATE TABLE IF NOT EXISTS pcrs
-		(index_num, date_planned, f_primer, r_primer, template, \
-		date_completed, notes, polymerase)
+		(index_num, date_planned, date_completed, f_primer, r_primer, \
+		template, notes, polymerase)
 	""")
 	cur.execute("""
 		CREATE TABLE IF NOT EXISTS ligations
-		(index_num, date_planned, pcr_insert, backbone, \
-		date_completed, notes)
+		(index_num, date_planned, date_completed, pcr_insert, backbone, \
+		notes)
 	""")
 	cur.execute("""
 		CREATE TABLE IF NOT EXISTS transformations
-		(index_num, date_planned, host_strain, plasmid, \
-		date_completed, notes)
+		(index_num, date_planned, date_completed, host_strain, plasmid, \
+		notes)
 	""")
 	cur.execute("""
 		CREATE TABLE IF NOT EXISTS minipreps
-		(index_num, date_planned, prepped_transformation, \
-		date_completed, notes, concentration)
+		(index_num, date_planned, date_completed, prepped_transformation, \
+		concentration, notes)
 	""")
 	con.commit()
 	con.close()
@@ -40,7 +41,8 @@ initialize_tables()
 
 
 def get_next_sql_index(table_name):
-	"""Get the next index for a given SQL table."""
+	"""Helper function that gets the next index for a
+	given SQL table."""
 
 	con = sqlite3.connect('clonetrack.db')
 	cur = con.cursor()
@@ -212,4 +214,42 @@ def manually_add(experiment_type, values_tuple):
 			Miniprep(*values_tuple)
 		except:
 			return "ValueError: Something is wrong with your parameters!"
-	
+
+
+def parse_exp_name(experiment_name):
+	"""Helper function that breaks an experiment name into the
+	experiment type and SQL table index.
+	e.g. pcr1 --> 'pcr', 1"""
+
+	match = re.search('(\w+)(\d+)', experiment_name)
+	return (match.groups()[0], int(match.groups()[1]))
+
+
+def view(experiment_name):
+	"""View information about an experiment."""
+
+	(experiment_type, index) = parse_exp_name(experiment_name)
+	con = sqlite3.connect('clonetrack.db')
+	cur = con.cursor()
+	cur.execute(f"""
+	SELECT * FROM {experiment_type.lower() + 's'}
+	WHERE index_num == {str(index)}
+	""")
+	experiment_info = cur.fetchone()
+	headers = {
+		"oligos": ["Index", "Sequence", "Orientation"],
+		"pcrs": ["Index", "Date Planned", "Date Completed",
+				 "Forward Primer", "Reverse Primer", "Template", "Notes",
+				 "Polymerase"],
+		"ligations": ["Index", "Date Planned", "Date Completed", 
+					  "PCR Insert", "Backbone", "Notes"],
+		"transformations": ["Index", "Date Planned", "Date Completed",
+							"Host Strain", "Plasmid", "Notes"],
+		"minipreps": ["Index", "Date Planned", "Date Completed",
+					  "Transformation", "Concentration", "Notes"]
+	}
+	header_list = headers[experiment_type.lower() + 's']
+	print(*header_list, sep='\t')
+	print(*experiment_info, sep='\t')
+
+
