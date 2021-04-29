@@ -39,7 +39,7 @@ python -m pytest -s
 This function is used to manually add an experiment/oligo to the database. There are five types of data that are supported: Oligo, PCR, Ligation, Transformation, and Miniprep. The syntax is as follows:
 
 ```python
-clonetrack.manually_add('oligo', ('sequence', 'orientation'))
+clonetrack.manually_add('oligo', ('name', 'sequence', 'orientation'))
 clonetrack.manually_add('pcr', ('date_planned', 'f_primer', 'r_primer', 'oligo_template', 'date_completed', 'notes', 'polymerase'))
 clonetrack.manually_add('ligation', ('date_planned', 'pcr_insert', 'backbone', 'date_completed', 'notes'))
 clonetrack.manually_add('transformation', ('date_planned', 'host_strain', 'plasmid', 'date_completed', 'notes'))
@@ -69,3 +69,15 @@ clonetrack.edit('PCR1', 'date_completed', '05-05-2021')
 ```
 
 The first argument is the name of the experiment to be edited; the second is the column of data to edit; and the third is the new information to use. Note that this function OVERWRITES any data that was already in the database.
+
+### plan
+
+This function is used to automatically add and plan experiments that take a set of oligos and backbones through the entire cloning workflow. It requires three .txt files which must be in FASTA format - examples can be found in the test files included in this repository. In FASTA format, each sequence is 2 lines long - the first line is a header line, which starts with a ">" and includes the name of the sequence; and the second line is the sequence. The syntax of the function is as follows:
+
+```python
+clonetrack.plan('templates.txt', 'f_primers.txt', 'r_primers.txt', backbones_list, start_date, host_strain)
+```
+
+The first three arguments are filenames for the FASTA .txt files. The fourth argument is a list of strings where each string is the name of a plasmid backbone. The fifth argument is the desired start date for the experiment - the function will automatically assign experiments to be done on successive days from each other. The sixth argument is optional and defaults to "E. coli", the most popular host strain for transformations in molecular biology.
+
+The function requires that each FASTA .txt file has the same number of sequences, and PCRS are planned such that the first sequence in the template file is PCR'd with the first sequence in the primer files, and so on with the second, third, and so forth. For ligations, the function assumes that each PCR product will be ligated with ALL backbones included in the backbone list.

@@ -1,0 +1,6 @@
+>JZ1-R
+CCCC
+>JZ2-R
+GGGG
+>JZ3-R
+TTTT

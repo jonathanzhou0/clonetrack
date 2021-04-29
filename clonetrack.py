@@ -2,6 +2,7 @@
 
 import sqlite3
 import re
+import datetime
 
 
 def initialize_tables():
@@ -11,7 +12,7 @@ def initialize_tables():
 	cur = con.cursor()
 	cur.execute("""
 		CREATE TABLE IF NOT EXISTS oligos
-		(index_num, sequence, orientation)
+		(index_num, name, sequence, orientation)
 	""")
 	cur.execute("""
 		CREATE TABLE IF NOT EXISTS pcrs
@@ -61,17 +62,18 @@ def get_next_sql_index(table_name):
 class Oligo:
 	"""Oligo."""
 
-	def __init__(self, sequence, orientation):
+	def __init__(self, name, sequence, orientation):
 		"""Initialize."""
 
+		self.name = name
 		self.sequence = sequence
 		self.orientation = orientation
 		self.ind = get_next_sql_index('oligos')
 
 		con = sqlite3.connect('clonetrack.db')
 		cur = con.cursor()
-		cmd = "INSERT INTO oligos VALUES (?,?,?)"
-		cur.execute(cmd, (self.ind, self.sequence, self.orientation))
+		cmd = "INSERT INTO oligos VALUES (?,?,?,?)"
+		cur.execute(cmd, (self.ind, self.name, self.sequence, self.orientation))
 		con.commit()
 		con.close()
 
@@ -239,7 +241,7 @@ def view(experiment_name):
 	""")
 	experiment_info = cur.fetchone()
 	headers = {
-		"oligos": ["Index", "Sequence", "Orientation"],
+		"oligos": ["Index", "Name", "Sequence", "Orientation"],
 		"pcrs": ["Index", "Date Planned", "Date Completed",
 				 "Forward Primer", "Reverse Primer", "Template", "Notes",
 				 "Polymerase"],
@@ -270,6 +272,103 @@ def edit(experiment_name, col_name, new_entry):
 	con.commit()
 	con.close()
 	return "Updated experiment!"
+
+
+def date_to_datetime(datestr):
+    """Helper function that converts date given in YYYY-MM-DD string
+	to datetime objects."""
+    year = int(datestr[0:4])
+    month = datestr[5:7]
+    if month[0] == '0':
+        month = int(month[1])
+    else:
+        month = int(month)
+    day = datestr[8:10]
+    if day[0] == '0':
+        day = int(day[1])
+    else:
+        day = int(day)
+    return datetime.date(year, month, day)
+
+
+def load_fasta(filename, oligo_type):
+	"""Helper function that processes FASTA formatted.txt files
+	containing sequence data for oligos and loads them into the 
+	Oligo SQL table while also creating a dict that maps to Oligo
+	objects."""
+
+	type_to_orientation = {
+		"template" : "doublestranded",
+		"f_primer" : "forward",
+		"r_primer" : "reverse"
+	}
+	f = open(filename, 'r')
+	names = 0
+	seqs = 0
+	oligo_list = list()
+	for line in f:
+		match1 = re.search(">(.+)$", line)
+		match2 = re.search("^[^>]+", line)
+		if match1:
+			oligo_name = match1.group(1)
+			names += 1
+		if match2:
+			oligo_seq = match2.group()
+			seqs += 1
+			if names == seqs:
+				oligo_list.append(Oligo(oligo_name, oligo_seq,
+										type_to_orientation[oligo_type]))
+			else:
+				raise ValueError(".txt file not in FASTA format!")
+	f.close()
+	return oligo_list
+
+
+def plan(templates_filename, f_primers_filename, r_primers_filename,
+		 backbones_list, start_date, host_strain='E. coli'):
+	"""Plan a full set of experiments given FASTA formatted .txt files
+	containing sequence data for templates, forward primers, reverse
+	primers."""
+
+	templates_list = load_fasta(templates_filename, 'template')
+	f_primers_list = load_fasta(f_primers_filename, 'f_primer')
+	r_primers_list = load_fasta(r_primers_filename, 'r_primer')
+	if len(templates_list) != len(f_primers_list) or \
+	len(templates_list) != len(r_primers_list):
+		raise ValueError("""
+		All .txt files must have the same number of sequences!
+		""")
+	pcr_list = list()
+	for template, f_primer, r_primer in zip(templates_list,
+											f_primers_list,
+											r_primers_list):
+		pcr_list.append(PCR(start_date, f_primer.name, r_primer.name,
+							template.name))
+	ligation_list = list()
+	ligation_date = date_to_datetime(start_date) + datetime.timedelta(days=1)
+	for pcr in pcr_list:
+		for backbone in backbones_list:
+			pcr_index = "PCR" + str(pcr.ind)
+			ligation_list.append(Ligation(ligation_date, pcr_index, backbone))
+	transformation_list = list()
+	transformation_date = date_to_datetime(start_date) + datetime.timedelta(days=2)
+	for ligation in ligation_list:
+		ligation_index = "Ligation" + str(ligation.ind)
+		transformation_list.append(Transformation(transformation_date,
+												  host_strain,
+												  ligation_index))
+	miniprep_list = list()
+	miniprep_date = date_to_datetime(start_date) + datetime.timedelta(days=3)
+	for transformation in transformation_list:
+		transformation_index = "Transformation" + str(transformation.ind)
+		miniprep_list.append(Miniprep(miniprep_date, transformation_index))
+	for miniprep in miniprep_list:
+		print("Miniprep" + str(miniprep.ind))
+
+
+
+
+
 
 
 
