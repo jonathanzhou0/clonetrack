@@ -1,5 +1,5 @@
 # CloneTrack
-CloneTrack is an application that plans and tracks experiments for the traditional molecular cloning workflow.
+CloneTrack is a Python library that plans and tracks experiments for the traditional molecular cloning workflow.
 
 ## Molecular cloning
 Molecular cloning is a very common set of experimental methods in molecular biology that is used to assemble and replicate recombinant DNA molecules. The workflow is generally as follows:
@@ -13,7 +13,7 @@ Molecular cloning is a very common set of experimental methods in molecular biol
 Almost every step of this workflow generates DNA parts which are often labelled and stored for future use. The vision of this application is to have the capability to plan experiments for each step of the cloning workflow given a list of starting materials, and store information about the experiments and DNA parts generated in a database.
 
 ## Architecture
-This application uses a command line interface, Python back end, and SQLite database.
+This is a Python library that makes use of a SQLite database.
 
 ## Documentation
 
@@ -91,3 +91,13 @@ clonetrack.export_csv()
 ```
 
 No arguments are needed.
+
+### to_do
+
+This function returns a list of experiments that have not yet been completed, and are scheduled to be done within the next x days. The syntax is as follows:
+
+```python
+clonetrack.to_do(numdays)
+```
+
+The function takes one argument numdays, which is an integer representing the number of days to look forward to find planned experiments.

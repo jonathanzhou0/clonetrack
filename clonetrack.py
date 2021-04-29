@@ -426,6 +426,54 @@ def export_csv():
 		for miniprep in minipreps:
 			datawriter.writerow(miniprep)
 	return 'Wrote to .csv files!'
-	
 
-	
+
+def to_do(numdays):
+	"""Display all experiments that do not yet have a value in the
+	'date_completed' field and have a value within a certain timeframe
+	in the 'date_planned' field."""
+
+	con = sqlite3.connect('clonetrack.db')
+	cur = con.cursor()
+	exp_to_date = dict()
+	cur.execute("""
+	SELECT index_num, date_planned FROM pcrs WHERE
+	date_completed == ''
+	""")
+	for pcr in cur.fetchall():
+		exp_name = 'PCR' + str(pcr[0])
+		date_planned = pcr[1]
+		exp_to_date[exp_name] = date_to_datetime(date_planned)
+	cur.execute("""
+	SELECT index_num, date_planned FROM ligations WHERE
+	date_completed == ''
+	""")
+	for ligation in cur.fetchall():
+		exp_name = 'Ligation' + str(ligation[0])
+		date_planned = ligation[1]
+		exp_to_date[exp_name] = date_to_datetime(date_planned)
+	cur.execute("""
+	SELECT index_num, date_planned FROM transformations WHERE
+	date_completed == ''
+	""")
+	for transformation in cur.fetchall():
+		exp_name = 'Transformation' + str(transformation[0])
+		date_planned = transformation[1]
+		exp_to_date[exp_name] = date_to_datetime(date_planned)
+	cur.execute("""
+	SELECT index_num, date_planned FROM minipreps WHERE
+	date_completed == ''
+	""")
+	for miniprep in cur.fetchall():
+		exp_name = 'Miniprep' + str(miniprep[0])
+		date_planned = miniprep[1]
+		exp_to_date[exp_name] = date_to_datetime(date_planned)
+	con.close()
+	to_do_list = list()
+	base = datetime.date.today()
+	date_list = [base + datetime.timedelta(days=x) for x in range(numdays)]
+	for name, date in exp_to_date.items():
+		if date in date_list:
+			to_do_list.append(name)
+	return to_do_list
+

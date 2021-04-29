@@ -11,10 +11,10 @@ def test_manually_add():
     """Test manually_add()."""
 
     ct.manually_add('oligo', ('JZ1F', 'GAGA', 'forward'))
-    ct.manually_add('pcr', ('05-01-2021', 'ATATAT', 'GAGAGA', 'GCGCGC'))
-    ct.manually_add('ligation', ('05-01-2021', 'PCR1', 'Template1'))
-    ct.manually_add('transformation', ('05-01-2021', 'Ecoli', 'Ligation1'))
-    ct.manually_add('miniprep', ('05-01-2021', 'Transformation1'))
+    ct.manually_add('pcr', ('2021-05-01', 'ATATAT', 'GAGAGA', 'GCGCGC'))
+    ct.manually_add('ligation', ('2021-05-01', 'PCR1', 'Template1'))
+    ct.manually_add('transformation', ('2021-05-01', 'Ecoli', 'Ligation1'))
+    ct.manually_add('miniprep', ('2021-05-01', 'Transformation1'))
     ct.manually_add('oligo', ('JZ1R', 'AGAG', 'reverse'))
     con = sqlite3.connect('clonetrack.db')
     cur = con.cursor()
@@ -29,12 +29,12 @@ def test_manually_add():
     cur.execute('SELECT * FROM minipreps')
     minipreps = cur.fetchall()
     assert oligos == [(1, 'JZ1F', 'GAGA', 'forward'), (2, 'JZ1R', 'AGAG', 'reverse')]
-    assert pcrs == [(1, '05-01-2021', '', 'ATATAT', 'GAGAGA', 'GCGCGC',
+    assert pcrs == [(1, '2021-05-01', '', 'ATATAT', 'GAGAGA', 'GCGCGC',
                     '', 'taq')]
-    assert ligations == [(1, '05-01-2021', '', 'PCR1', 'Template1', '')]
-    assert transformations == [(1, '05-01-2021', '', 'Ecoli', 'Ligation1',
+    assert ligations == [(1, '2021-05-01', '', 'PCR1', 'Template1', '')]
+    assert transformations == [(1, '2021-05-01', '', 'Ecoli', 'Ligation1',
                                '')]
-    assert minipreps == [(1, '05-01-2021', '', 'Transformation1', None, '')]
+    assert minipreps == [(1, '2021-05-01', '', 'Transformation1', None, '')]
     con.commit()
     con.close()
 
@@ -42,14 +42,14 @@ def test_manually_add():
 def test_edit():
     """Test edit()."""
 
-    ct.edit('PCR1', 'date_completed', '05-05-2021')
+    ct.edit('PCR1', 'date_completed', '2021-05-05')
     con = sqlite3.connect('clonetrack.db')
     cur = con.cursor()
     cur.execute("""
     SELECT date_completed FROM pcrs
     WHERE index_num == 1
     """)
-    assert cur.fetchone()[0] == '05-05-2021'
+    assert cur.fetchone()[0] == '2021-05-05'
     con.commit()
     con.close()
 
@@ -160,6 +160,12 @@ def test_export_csv():
             if idx == 0:
                 continue
             assert int(row[0]) == idx
+
+
+def test_to_do():
+    """Test to_do()."""
+
+    assert ct.to_do(0) == []
+    assert len(ct.to_do(7)) == 3
+    assert len(ct.to_do(40)) == 24
     
-
-
